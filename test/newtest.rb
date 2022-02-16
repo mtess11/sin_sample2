@@ -1,0 +1,69 @@
+ENV['APP_ENV'] = 'test'
+
+require_relative '../app.rb'
+require 'minitest/autorun'
+require 'rack/test'
+
+include Rack::Test::Methods
+
+def app
+  Sinatra::Application
+end
+
+describe 'The HelloWorld App' do
+  it "says hello" do
+    get '/'
+    assert last_response.ok?
+    assert last_response.body == 'says hello'
+  end
+end
+
+describe "GET on /api/users/:id" do
+  before do
+    User.delete_all
+    User.create(
+      name: "paul",
+      email: "paul@gmail.com",
+      password: "foo",
+      bio: "Student")
+  end
+
+
+
+  it "Should return user by name" do
+    get '/api/users/paul'
+    assert last_response.ok?
+    attributes = JSON.parse(last_response.body)
+    assert attributes["name"] == "paul"
+  end
+
+  it "Should return users email too" do
+    get '/api/users/paul'
+    assert last_response.ok?
+    attributes = JSON.parse(last_response.body)
+    assert attributes["email"] == "paul@gmail.com"
+  end
+  it "Should return user by name" do
+    get '/api/users/paul'
+    assert last_response.ok?
+    attributes = JSON.parse(last_response.body)
+    assert !attributes.key?("password")
+  end
+end
+
+describe "POST on /api/users" do
+  it "Should create a user" do
+    post '/api/users', {
+      name: "manzi",
+      email: "manzi@gmail.com",
+      password: "lotus",
+      bio: "Lotus CEO"}.to_json
+    last_response.ok?
+    get '/api/users/manzi'
+    assert last_response.ok?
+    attributes = JSON.parse(last_response.body)
+    assert_equal attributes["email"], "manzi@gmail.com"
+    assert_equal attributes["name"], "manzi"
+    assert_equal attributes["bio"], "Lotus CEO"
+  end
+end
